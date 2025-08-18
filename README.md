@@ -123,3 +123,89 @@ Average Speed:  9.2 MB/sec
    ```
 
 ### Method 2: Using Git Clone (Requires Git Installation)
+```powershell
+# Clone the repository
+git clone https://github.com/Lee-Robinson/enhanced-robocopy-script.git
+cd enhanced-robocopy-script
+
+# Run as Administrator and execute
+.\RobocopyEnhanced.ps1
+```
+
+### Method 3: Quick One-Liner Installation
+```powershell
+# Download and run directly (PowerShell 3.0+)
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Lee-Robinson/enhanced-robocopy-script/main/RobocopyEnhanced.ps1" -OutFile "RobocopyEnhanced.ps1"; .\RobocopyEnhanced.ps1
+```
+
+**⚠️ Important:** Always run PowerShell as Administrator for proper permission copying
+
+## Troubleshooting
+
+### Common Issues
+
+**"Execution Policy" Error**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+**Git Not Recognised Error**
+- Method 2 requires Git to be installed from [git-scm.com](https://git-scm.com/download/win)
+- Use Method 1 (Direct Download) if you don't have Git installed
+
+**Access Denied Errors**
+- Ensure PowerShell is running as Administrator
+- Verify you have permissions to both source and destination
+- Check network connectivity to UNC paths
+
+**No Progress Updates**
+- Progress updates occur every 5 seconds
+- Large files may take time to show initial progress
+- Check the log file for detailed real-time information
+
+### Exit Codes
+- **0**: No files copied (no changes needed)
+- **1**: Files copied successfully ✅
+- **2**: Extra files detected
+- **3**: Files copied and extra files detected ✅
+- **8**: Some files could not be copied ⚠️
+- **16**: Serious error occurred ❌
+
+## Log Files
+
+Detailed logs are automatically saved to:
+```
+%TEMP%\RobocopyLog_YYYYMMDD_HHMMSS.txt
+```
+
+Logs contain:
+- Complete file-by-file copy status
+- Detailed error messages
+- Transfer statistics
+- Performance metrics
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues, feature requests, or pull requests.
+
+## Licence
+
+This project is licenced under the MIT Licence - see the [LICENCE](LICENCE) file for details.
+
+## Changelog
+
+### v1.0.0
+- Initial release
+- Interactive source/destination input
+- Real-time progress tracking
+- Comprehensive reporting
+- Error handling and logging
+- Resume capability for interrupted transfers
+
+## Author
+
+Created by Lee Robinson for enterprise server migrations and data transfers.
+
+---
+
+**⚠️ Important**: Always test with the `/L` (list-only) switch first to preview what will be copied before running the actual operation.
