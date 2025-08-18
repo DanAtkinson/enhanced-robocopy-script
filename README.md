@@ -96,7 +96,7 @@ Average Speed:  9.2 MB/sec
 
 ## Installation
 
-### Method 1: Direct Download from GitHub (Recommended)
+### Method 1: Direct Download from GitHub
 1. **Download the script:**
    - Click the green "Code" button above
    - Select "Download ZIP" 
@@ -122,10 +122,10 @@ Average Speed:  9.2 MB/sec
    .\RobocopyEnhanced.ps1
    ```
 
-### Method 2: Using Git Clone (Requires Git Installation)
+### Method 2: Using Git Clone
 ```powershell
 # Clone the repository
-git clone https://github.com/Lee-Robinson/enhanced-robocopy-script.git
+git clone https://github.com/YOURUSERNAME/enhanced-robocopy-script.git
 cd enhanced-robocopy-script
 
 # Run as Administrator and execute
@@ -135,7 +135,7 @@ cd enhanced-robocopy-script
 ### Method 3: Quick One-Liner Installation
 ```powershell
 # Download and run directly (PowerShell 3.0+)
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Lee-Robinson/enhanced-robocopy-script/main/RobocopyEnhanced.ps1" -OutFile "RobocopyEnhanced.ps1"; .\RobocopyEnhanced.ps1
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/YOURUSERNAME/enhanced-robocopy-script/main/RobocopyEnhanced.ps1" -OutFile "RobocopyEnhanced.ps1"; .\RobocopyEnhanced.ps1
 ```
 
 **⚠️ Important:** Always run PowerShell as Administrator for proper permission copying
@@ -148,10 +148,6 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Lee-Robinson/enhanced-
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
-
-**Git Not Recognised Error**
-- Method 2 requires Git to be installed from [git-scm.com](https://git-scm.com/download/win)
-- Use Method 1 (Direct Download) if you don't have Git installed
 
 **Access Denied Errors**
 - Ensure PowerShell is running as Administrator
@@ -204,7 +200,7 @@ This project is licenced under the MIT Licence - see the [LICENCE](LICENCE) file
 
 ## Author
 
-Created by Lee Robinson for enterprise server migrations and data transfers.
+Created for enterprise server migrations and data transfers.
 
 ---
 
