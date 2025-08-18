@@ -126,49 +126,139 @@ $process.Start() | Out-Null
 
 # Progress tracking variables
 $lastProgressTime = Get-Date
-$bytesProcessed = 0
 $filesCopied = 0
+$directoriesProcessed = 0
 $errors = 0
-$avgSpeed = 0
+$currentFile = ""
+$totalBytes = 0
+$copiedBytes = 0
+$spinnerChars = @('|', '/', '-', '\')
+$spinnerIndex = 0
 
-Write-ColorOutput "Monitoring progress... (Press Ctrl+C to view current status)" "Cyan"
+# Progress tracking variables
+$filesCopied = 0
+$directoriesProcessed = 0
+$errors = 0
+$currentFile = ""
+$totalBytes = 0
+$copiedBytes = 0
+$spinnerChars = @('|', '/', '-', '\')
+$spinnerIndex = 0
 
-# Monitor the process
+Write-ColorOutput "Monitoring progress... (Robocopy is running in background)" "Cyan"
+Write-Host
+
+# Monitor the process with better progress display
 while (-not $process.HasExited) {
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 2
     
     # Try to read current progress from log file
     if (Test-Path $logFile) {
         try {
-            $logContent = Get-Content $logFile -Tail 20 -ErrorAction SilentlyContinue
+            $logContent = Get-Content $logFile -ErrorAction SilentlyContinue
+            $recentLines = $logContent | Select-Object -Last 30
             
-            # Parse for progress information
+            # Reset counters for this iteration
+            $tempFilesCopied = 0
+            $tempErrors = 0
+            $latestFile = ""
+            
+            # Parse log content for progress
             foreach ($line in $logContent) {
-                if ($line -match "(\d+)\s+(\S+)\s+(\S+)\s+(\d+\.\d+%)\s+(\S+)") {
-                    $filesCopied++
+                # Count copied files (lines with timestamps and 100% or "New File")
+                if ($line -match "^\s*\d+\s+\S+\s+\S+\s+(100\.0%|New File)" -or $line -match "^\s*New File\s+") {
+                    $tempFilesCopied++
                 }
-                if ($line -match "ERROR|RETRY") {
-                    $errors++
+                
+                # Count errors
+                if ($line -match "ERROR|RETRY|FAILED") {
+                    $tempErrors++
+                }
+                
+                # Parse bytes information
+                if ($line -match "Bytes\s*:\s*(\d+)\s+(\d+)") {
+                    $totalBytes = [long]$matches[1]
+                    $copiedBytes = [long]$matches[2]
                 }
             }
             
-            # Calculate elapsed time and estimated completion
+            # Get the most recent file being processed
+            foreach ($line in $recentLines) {
+                if ($line -match "^\s*\d+.*\\([^\\]+)$" -or $line -match "New File.*\\([^\\]+)$") {
+                    $latestFile = $matches[1]
+                }
+                if ($line -match "New Dir.*\\([^\\]+)\\?$") {
+                    $directoriesProcessed++
+                }
+            }
+            
+            $filesCopied = $tempFilesCopied
+            $errors = $tempErrors
+            if ($latestFile) { $currentFile = $latestFile }
+            
+            # Calculate progress percentage
+            $progressPercent = 0
+            if ($sourceSize -gt 0 -and $copiedBytes -gt 0) {
+                $progressPercent = [math]::Round(($copiedBytes / ($sourceSize * 1GB)) * 100, 1)
+            }
+            
+            # Calculate elapsed time and speed
             $elapsed = (Get-Date) - $startTime
             $elapsedStr = "{0:hh\:mm\:ss}" -f $elapsed
+            $speed = if ($elapsed.TotalSeconds -gt 0 -and $copiedBytes -gt 0) { 
+                Format-Bytes ($copiedBytes / $elapsed.TotalSeconds) 
+            } else { 
+                "Calculating..." 
+            }
             
-            # Display progress
+            # Spinning indicator
+            $spinner = $spinnerChars[$spinnerIndex % 4]
+            $spinnerIndex++
+            
+            # Current time
             $currentTime = Get-Date -Format "HH:mm:ss"
-            Write-Host "`r[$currentTime] Files: $filesCopied | Errors: $errors | Elapsed: $elapsedStr | Running..." -NoNewline -ForegroundColor Green
+            
+            # Clear previous lines and display new progress
+            Write-Host "`r" -NoNewline
+            $statusLine1 = "[$currentTime] $spinner Copying: $currentFile"
+            $statusLine2 = "Files: $filesCopied | Dirs: $directoriesProcessed | Errors: $errors | Elapsed: $elapsedStr"
+            $statusLine3 = "Data: $(Format-Bytes $copiedBytes) / $(Format-Bytes ($sourceSize * 1GB)) ($progressPercent%) | Speed: $speed/sec"
+            
+            # Truncate long filenames
+            if ($statusLine1.Length -gt 100) {
+                $statusLine1 = $statusLine1.Substring(0, 97) + "..."
+            }
+            
+            Write-Host $statusLine1 -ForegroundColor Green
+            Write-Host $statusLine2 -ForegroundColor Yellow  
+            Write-Host $statusLine3 -ForegroundColor Cyan
+            Write-Host "`e[3A" -NoNewline  # Move cursor up 3 lines for next update
+            
         }
         catch {
-            # Continue silently if log parsing fails
+            # Show basic spinner if log parsing fails
+            $spinner = $spinnerChars[$spinnerIndex % 4]
+            $spinnerIndex++
+            $currentTime = Get-Date -Format "HH:mm:ss"
+            $elapsed = (Get-Date) - $startTime
+            $elapsedStr = "{0:hh\:mm\:ss}" -f $elapsed
+            Write-Host "`r[$currentTime] $spinner Robocopy running... | Elapsed: $elapsedStr | Analysing files..." -NoNewline -ForegroundColor Green
         }
+    } else {
+        # Show spinner while waiting for log file
+        $spinner = $spinnerChars[$spinnerIndex % 4]
+        $spinnerIndex++
+        $currentTime = Get-Date -Format "HH:mm:ss"
+        Write-Host "`r[$currentTime] $spinner Starting robocopy... Please wait..." -NoNewline -ForegroundColor Yellow
     }
 }
 
 $process.WaitForExit()
 $endTime = Get-Date
 $totalTime = $endTime - $startTime
+
+# Clear the progress display
+Write-Host "`n`n`n"
 
 # Final results
 Write-Host "`n"
