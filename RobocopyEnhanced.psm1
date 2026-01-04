@@ -92,7 +92,7 @@ function Invoke-RobocopyEnhanced {
                 return [math]::Round($size / 1GB, 2)
             }
             catch {
-                Write-Warning "Failed to calculate folder size: $_"
+                Write-Warning "Failed to calculate folder size for progress estimation: $_ - Progress percentages may be inaccurate but the copy will proceed."
                 return 0
             }
         }
@@ -302,11 +302,13 @@ function Invoke-RobocopyEnhanced {
                         Write-Host $statusLine2 -ForegroundColor Yellow  
                         Write-Host $statusLine3 -ForegroundColor Cyan
                         # Move cursor up 3 lines for next update (if supported)
-                        if ($Host.UI.SupportsVirtualTerminal -or $PSVersionTable.PSVersion.Major -ge 7) {
-                            Write-Host "`e[3A" -NoNewline
-                        } else {
-                            # For older hosts, just add spacing
-                            Write-Host ""
+                        try {
+                            $supportsVT = ($Host.UI.PSObject.Properties.Name -contains 'SupportsVirtualTerminal') -and $Host.UI.SupportsVirtualTerminal
+                            if ($supportsVT -or $PSVersionTable.PSVersion.Major -ge 7) {
+                                Write-Host "`e[3A" -NoNewline
+                            }
+                        } catch {
+                            # Silently ignore if VT check fails - just continue without cursor movement
                         }
                         
                     }
@@ -429,10 +431,14 @@ function Invoke-RobocopyEnhanced {
                 if ($openLog -eq "Y" -or $openLog -eq "y") {
                     # Use Invoke-Item to open with default text editor
                     try {
-                        Invoke-Item $LogPath
+                        Invoke-Item $LogPath -ErrorAction Stop
                     } catch {
                         # Fallback to notepad if Invoke-Item fails
-                        Start-Process notepad.exe -ArgumentList $LogPath -ErrorAction SilentlyContinue
+                        try {
+                            Start-Process notepad.exe -ArgumentList $LogPath -ErrorAction Stop
+                        } catch {
+                            Write-Warning "Could not open log file. Please manually open: $LogPath"
+                        }
                     }
                 }
             }
