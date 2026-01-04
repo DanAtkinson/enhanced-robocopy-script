@@ -136,8 +136,28 @@ function Invoke-RobocopyEnhanced {
             if (-not $Destination) {
                 do {
                     $Destination = Read-Host "Enter destination path (e.g., D:\ or \\NEW-SERVER\d$)"
-                    $parentPath = Split-Path $Destination -Parent
-                    if ($parentPath -and -not (Test-Path $parentPath)) {
+                    # Validate destination path
+                    $isValid = $false
+                    
+                    # Check if it's a root path (e.g., D:\, C:\)
+                    if ($Destination -match '^[A-Za-z]:\\?$') {
+                        $driveLetter = $Destination.Substring(0, 1)
+                        if (Test-Path "${driveLetter}:\") {
+                            $isValid = $true
+                        }
+                    }
+                    # Check if parent path exists for non-root paths
+                    elseif ($Destination) {
+                        $parentPath = Split-Path $Destination -Parent
+                        if ($parentPath -and (Test-Path $parentPath)) {
+                            $isValid = $true
+                        } elseif (-not $parentPath) {
+                            # UNC path or other special case - let robocopy handle it
+                            $isValid = $true
+                        }
+                    }
+                    
+                    if (-not $isValid) {
                         Write-ColorOutput "ERROR: Destination parent path does not exist!" "Red"
                         $Destination = ""
                     }
@@ -303,8 +323,7 @@ function Invoke-RobocopyEnhanced {
                         Write-Host $statusLine3 -ForegroundColor Cyan
                         # Move cursor up 3 lines for next update (if supported)
                         try {
-                            $supportsVT = ($Host.UI.PSObject.Properties.Name -contains 'SupportsVirtualTerminal') -and $Host.UI.SupportsVirtualTerminal
-                            if ($supportsVT -or $PSVersionTable.PSVersion.Major -ge 7) {
+                            if ($Host.UI.SupportsVirtualTerminal -or $PSVersionTable.PSVersion.Major -ge 7) {
                                 Write-Host "`e[3A" -NoNewline
                             }
                         } catch {
