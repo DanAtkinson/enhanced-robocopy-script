@@ -2,6 +2,8 @@
 
 A PowerShell wrapper for Robocopy that provides real-time progress tracking, detailed reporting, and an improved user experience for server-to-server file migrations.
 
+> **New in v2.0**: Now available as a PowerShell module! Use `RobocopyEnhanced.psm1` for improved reusability and automation capabilities.
+
 ## Features
 
 - **Interactive Setup**: Prompts for source/destination with path validation
@@ -10,6 +12,9 @@ A PowerShell wrapper for Robocopy that provides real-time progress tracking, det
 - **Permission Preservation**: Maintains all file security permissions and metadata
 - **Resume Capability**: Smart handling of interrupted transfers
 - **Professional Logging**: Timestamped logs with detailed operation history
+- **Module Support**: Import as PowerShell module for reusable functionality
+- **Automation-Ready**: Quiet mode and structured output for scripting
+- **Programmatic Access**: Returns result objects for integration with other tools
 
 ## Default Configuration
 
@@ -22,6 +27,42 @@ The script uses these optimal switches by default:
 - `/V /TS /FP /BYTES` - Verbose logging with timestamps and full paths
 
 ## Usage
+
+There are two ways to use this tool: as a standalone script or as a PowerShell module.
+
+### Option A: PowerShell Module (Recommended)
+
+**Step 1: Import the Module**
+```powershell
+Import-Module ./RobocopyEnhanced.psm1
+```
+
+**Step 2: Use the Cmdlet**
+```powershell
+# Interactive mode
+Invoke-RobocopyEnhanced
+
+# With parameters
+Invoke-RobocopyEnhanced -Source "\\OLD-SERVER\d$" -Destination "D:\"
+
+# Automation mode (no prompts)
+Invoke-RobocopyEnhanced -Source "C:\Data" -Destination "D:\Backup" -Quiet
+
+# With custom log path
+Invoke-RobocopyEnhanced -Source "C:\Data" -Destination "D:\Backup" -LogPath "C:\Logs\backup.log"
+
+# Get result object for further processing
+$result = Invoke-RobocopyEnhanced -Source "C:\Data" -Destination "D:\Backup" -Quiet
+Write-Host "Copied $($result.CopiedFiles) files in $($result.Duration)"
+```
+
+**View Help**
+```powershell
+Get-Help Invoke-RobocopyEnhanced -Full
+Get-Help Invoke-RobocopyEnhanced -Examples
+```
+
+### Option B: Standalone Script
 
 ### Method 1: Interactive Mode
 ```powershell
@@ -51,6 +92,32 @@ The script will prompt you for:
 - `/MT:8` - Use 8 threads for faster copying
 
 ## Examples
+
+### Using the PowerShell Module
+
+```powershell
+# Import the module
+Import-Module ./RobocopyEnhanced.psm1
+
+# Basic server migration
+Invoke-RobocopyEnhanced -Source "\\OLD-SERVER\d$" -Destination "D:\"
+
+# Dry run (preview only)
+Invoke-RobocopyEnhanced -Source "\\SERVER\data$" -Destination "C:\NewData" -AdditionalSwitches "/L"
+
+# Mirror with multi-threading
+Invoke-RobocopyEnhanced -Source "\\SOURCE\share$" -Destination "D:\Data" -AdditionalSwitches "/MIR /MT:8"
+
+# Automated backup with result capture
+$result = Invoke-RobocopyEnhanced -Source "C:\Important" -Destination "D:\Backup" -Quiet
+if ($result.CopiedFiles -gt 0) {
+    Write-Host "✓ Backup successful! Copied $($result.CopiedFiles) files."
+} else {
+    Write-Host "No files needed copying."
+}
+```
+
+### Using the Standalone Script
 
 ### Basic Server Migration
 ```powershell
@@ -128,17 +195,39 @@ Average Speed:  9.2 MB/sec
 git clone https://github.com/YOURUSERNAME/enhanced-robocopy-script.git
 cd enhanced-robocopy-script
 
-# Run as Administrator and execute
+# Option 1: Use as module
+Import-Module ./RobocopyEnhanced.psm1
+Invoke-RobocopyEnhanced
+
+# Option 2: Run as script
 .\RobocopyEnhanced.ps1
 ```
 
 ### Method 3: Quick One-Liner Installation
 ```powershell
-# Download and run directly (PowerShell 3.0+)
+# Download and run script directly (PowerShell 3.0+)
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/YOURUSERNAME/enhanced-robocopy-script/main/RobocopyEnhanced.ps1" -OutFile "RobocopyEnhanced.ps1"; .\RobocopyEnhanced.ps1
+
+# Or download and import module
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/YOURUSERNAME/enhanced-robocopy-script/main/RobocopyEnhanced.psm1" -OutFile "RobocopyEnhanced.psm1"; Import-Module ./RobocopyEnhanced.psm1
 ```
 
 **⚠️ Important:** Always run PowerShell as Administrator for proper permission copying
+
+## What's New in the Module Version
+
+The `RobocopyEnhanced.psm1` module offers several improvements over the standalone script:
+
+1. **Reusable Functions**: Import once and use multiple times in the same session
+2. **Parameter Validation**: Built-in validation prevents common errors
+3. **Comprehensive Help**: Use `Get-Help Invoke-RobocopyEnhanced` for detailed documentation
+4. **Quiet Mode**: `-Quiet` switch suppresses prompts for automation
+5. **Custom Log Paths**: `-LogPath` parameter for better log management
+6. **Return Objects**: Get structured data back for programmatic use
+7. **Better Error Handling**: Improved try-catch blocks and error messages
+8. **Cleaner Code**: Removed duplicate code and improved maintainability
+
+See [IMPROVEMENTS.md](IMPROVEMENTS.md) for a complete list of improvements and additional suggestions.
 
 ## Troubleshooting
 
