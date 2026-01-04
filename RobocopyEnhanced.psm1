@@ -56,7 +56,9 @@ function Invoke-RobocopyEnhanced {
     param(
         [Parameter(Position=0, ValueFromPipelineByPropertyName=$true)]
         [ValidateScript({
+            # Allow empty/null for interactive prompting
             if ([string]::IsNullOrWhiteSpace($_)) { return $true }
+            # Validate non-empty paths
             if (-not (Test-Path $_)) {
                 throw "Source path '$_' does not exist or is not accessible."
             }
@@ -299,7 +301,13 @@ function Invoke-RobocopyEnhanced {
                         Write-Host $statusLine1 -ForegroundColor Green
                         Write-Host $statusLine2 -ForegroundColor Yellow  
                         Write-Host $statusLine3 -ForegroundColor Cyan
-                        Write-Host "`e[3A" -NoNewline  # Move cursor up 3 lines for next update
+                        # Move cursor up 3 lines for next update (if supported)
+                        if ($Host.UI.SupportsVirtualTerminal -or $PSVersionTable.PSVersion.Major -ge 7) {
+                            Write-Host "`e[3A" -NoNewline
+                        } else {
+                            # For older hosts, just add spacing
+                            Write-Host ""
+                        }
                         
                     }
                     catch {
@@ -419,7 +427,13 @@ function Invoke-RobocopyEnhanced {
                 Write-Host
                 $openLog = Read-Host "Open detailed log file? (Y/N)"
                 if ($openLog -eq "Y" -or $openLog -eq "y") {
-                    Start-Process notepad.exe -ArgumentList $LogPath
+                    # Use Invoke-Item to open with default text editor
+                    try {
+                        Invoke-Item $LogPath
+                    } catch {
+                        # Fallback to notepad if Invoke-Item fails
+                        Start-Process notepad.exe -ArgumentList $LogPath -ErrorAction SilentlyContinue
+                    }
                 }
             }
             
